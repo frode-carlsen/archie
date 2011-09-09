@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="archieBuilder"
+         name="Archie Project Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="archie.builder.ArchieBuilder">
+         </run>
+      </builder>
+   </extension>
+   <extension
+         id="archieNature"
+         name="Archie Project Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="archie.builder.ArchieNature">
+         </run>
+      </runtime>
+      <builder
+            id="archie.archieBuilder">
+      </builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IProject"
+            nameFilter="*"
+            id="archie.contribution1">
+         <action
+               label="Add/Remove Archie Nature"
+               class="archie.builder.ToggleNatureAction"
+               menubarPath="additions"
+               enablesFor="+"
+               id="archie.addRemoveNatureAction">
+         </action>
+      </objectContribution>
+   </extension>
+   <extension
+         id="archieProblem"
+         name="Archie Problem"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+   </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            name="Archie Rules"
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            class="archie.rule.ui.ArchieRulesPropertyPage"
+            id="archie.rule.ui.ArchieRulesPropertyPage"
+            >
+      </page>
+   </extension>
+
+</plugin>
