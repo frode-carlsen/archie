@@ -1,3 +1,18 @@
+/*
+ Copyright 2011 Frode Carlsen
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
 package archie.rule;
 
 import java.io.ByteArrayInputStream;
@@ -29,10 +44,8 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.junit.Assert;
 
-import archie.builder.ArchieCompilationUnit;
-
 public class CompilationUnitTestHelper {
-    
+
     @SuppressWarnings("unused")
     private final IJavaProject javaProject;
 
@@ -40,7 +53,23 @@ public class CompilationUnitTestHelper {
         javaProject = createDefaultProject();
     }
 
-    private IJavaProject createDefaultProject() throws Exception {
+    CompilationUnit createCompilationUnit(String fullyQualifiedClassName, String content) throws CoreException {
+        String path = fullyQualifiedClassName.replace('.', '/') + ".java";
+        String fullPath = "P/src/" + path;
+        createFolder(new Path(fullPath.substring(0, fullPath.lastIndexOf('/'))));
+        createFile(fullPath, content);
+        ICompilationUnit compilationUnit = (ICompilationUnit) JavaCore.create(getFile(fullPath));
+
+        ASTParser parser = ASTParser.newParser(AST.JLS3);
+        parser.setSource(compilationUnit);
+        parser.setStatementsRecovery(true);
+        parser.setBindingsRecovery(true);
+        parser.setResolveBindings(true);
+
+        return (CompilationUnit) parser.createAST(null);
+    }
+
+    private static IJavaProject createDefaultProject() throws Exception {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 
         IProject project = root.getProject("P");
@@ -65,27 +94,9 @@ public class CompilationUnitTestHelper {
         folder.create(true, true, null);
         IPackageFragmentRoot srcFolder = javaProject.getPackageFragmentRoot(folder);
         Assert.assertTrue(srcFolder.exists()); // resource exists and is on build path
-        
+
         return javaProject;
 
-    }
-
-    MockArchieCompilationUnit createCompilationUnit(String fullyQualifiedClassName, String content) throws CoreException {
-        String path = fullyQualifiedClassName.replace('.', '/') + ".java";
-        String fullPath = "P/src/" + path;
-        createFolder(new Path(fullPath.substring(0, fullPath.lastIndexOf('/'))));
-        createFile(fullPath, content);
-        ICompilationUnit compilationUnit = (ICompilationUnit) JavaCore.create(getFile(fullPath));
-        
-        ASTParser parser = ASTParser.newParser(AST.JLS3);
-        parser.setSource(compilationUnit);
-        parser.setStatementsRecovery(true);
-        parser.setBindingsRecovery(true);
-        parser.setResolveBindings(true);
-        
-        CompilationUnit unit = (CompilationUnit) parser.createAST(null);
-
-        return new MockArchieCompilationUnit(unit);
     }
 
     private static IFile getFile(String path) {
@@ -93,7 +104,7 @@ public class CompilationUnitTestHelper {
     }
 
     private static IFile createFile(String path, String content) {
-    
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream(content.getBytes());
         try {
             IFile file = getFile(path);
@@ -152,31 +163,6 @@ class BasicProblemRequestor implements IProblemRequestor {
     @Override
     public boolean isActive() {
         return true;
-    }
-}
-
-class MockArchieCompilationUnit extends ArchieCompilationUnit {
-
-    volatile TestValidationMessage data;
-
-    public MockArchieCompilationUnit(CompilationUnit cu) {
-        super(null, cu);
-    }
-
-    @Override
-    public void addMarker(String message, int lineNumber, int severity) {
-        this.data.message = message;
-        this.data.lineNumber = lineNumber;
-        this.data.severity = severity;
-    }
-
-    @Override
-    public String getSourceLocation() {
-        return "nowhere";
-    }
-    
-    public void setTestValidationMessage(TestValidationMessage data) {
-        this.data = data;
     }
 }
 
