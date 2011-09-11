@@ -22,8 +22,6 @@ import java.io.InputStream;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
@@ -32,25 +30,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.launching.JavaRuntime;
-import org.junit.Assert;
 
-public class CompilationUnitTestHelper {
-
-    @SuppressWarnings("unused")
-    private final IJavaProject javaProject;
-
-    public CompilationUnitTestHelper() throws Exception {
-        javaProject = createJavaProject("P");
-    }
+public class CompilationUnitFactory {
 
     CompilationUnit createCompilationUnit(String fullyQualifiedClassName, String content) throws CoreException {
         String path = fullyQualifiedClassName.replace('.', '/') + ".java";
@@ -66,36 +52,6 @@ public class CompilationUnitTestHelper {
         parser.setResolveBindings(true);
 
         return (CompilationUnit) parser.createAST(null);
-    }
-
-    private static IJavaProject createJavaProject(String projectName) throws Exception {
-        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-
-        IProject project = root.getProject(projectName);
-        project.create(null);
-        project.open(null);
-
-        IProjectDescription description = project.getDescription();
-        description.setNatureIds(new String[] { JavaCore.NATURE_ID });
-        project.setDescription(description, null);
-
-        IJavaProject javaProject = JavaCore.create(project);
-
-        IClasspathEntry[] buildPath = {
-                JavaCore.newSourceEntry(javaProject.getPath().append("src")),
-                JavaRuntime.getDefaultJREContainerEntry()
-        };
-        javaProject.setRawClasspath(buildPath, project.getFullPath().append("bin"), null);
-        javaProject.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_1_6);
-
-        // create source folder
-        IFolder folder = project.getFolder("src");
-        folder.create(true, true, null);
-        IPackageFragmentRoot srcFolder = javaProject.getPackageFragmentRoot(folder);
-        Assert.assertTrue(srcFolder.exists()); // resource exists and is on build path
-
-        return javaProject;
-
     }
 
     private static IFile getFile(String path) {

@@ -19,6 +19,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 
+import org.eclipse.jdt.core.IJavaProject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,15 +43,21 @@ import org.junit.Test;
  */
 public class DependencyRuleTest {
 
+    @SuppressWarnings("unused")
+    private static IJavaProject javaProject;
+    
     private static MockArchieCompilationUnit compilationUnit;
+    
     private TestValidationMessage validator = new TestValidationMessage();
 
     @BeforeClass
     public static void setupCompilationUnit() throws Exception {
-        CompilationUnitTestHelper testHelper = new CompilationUnitTestHelper();
+        javaProject = new EclipseTestProject().getJavaProject();
+        
+        CompilationUnitFactory compilationUnitFactory = new CompilationUnitFactory();
 
         compilationUnit = new MockArchieCompilationUnit(
-                testHelper.createCompilationUnit("hello.world.HelloWorld", ""
+                compilationUnitFactory.createCompilationUnit("hello.world.HelloWorld", ""
                         + "package hello.world;\n"
                         + "import java.util.*;\n"
                         + "import java.math.BigDecimal;\n\n"
