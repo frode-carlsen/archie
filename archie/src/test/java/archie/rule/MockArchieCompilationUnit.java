@@ -43,3 +43,9 @@ class MockArchieCompilationUnit extends ArchieCompilationUnit {
         this.data = data;
     }
 }
+
+class TestValidationMessage {
+    String message;
+    int lineNumber;
+    int severity;
+}

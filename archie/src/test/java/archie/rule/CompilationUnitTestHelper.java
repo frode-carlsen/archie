@@ -12,11 +12,12 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
-*/
+ */
 package archie.rule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -35,9 +36,7 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -50,7 +49,7 @@ public class CompilationUnitTestHelper {
     private final IJavaProject javaProject;
 
     public CompilationUnitTestHelper() throws Exception {
-        javaProject = createDefaultProject();
+        javaProject = createJavaProject("P");
     }
 
     CompilationUnit createCompilationUnit(String fullyQualifiedClassName, String content) throws CoreException {
@@ -69,10 +68,10 @@ public class CompilationUnitTestHelper {
         return (CompilationUnit) parser.createAST(null);
     }
 
-    private static IJavaProject createDefaultProject() throws Exception {
+    private static IJavaProject createJavaProject(String projectName) throws Exception {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 
-        IProject project = root.getProject("P");
+        IProject project = root.getProject(projectName);
         project.create(null);
         project.open(null);
 
@@ -104,8 +103,7 @@ public class CompilationUnitTestHelper {
     }
 
     private static IFile createFile(String path, String content) {
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(content.getBytes());
+        InputStream inputStream = new ByteArrayInputStream(content.getBytes());
         try {
             IFile file = getFile(path);
             file.create(inputStream, true, null);
@@ -120,8 +118,9 @@ public class CompilationUnitTestHelper {
 
     private static IFolder createFolder(IPath path) throws CoreException {
         final IFolder folder = getWorkspaceRoot().getFolder(path);
-        if (folder.exists())
+        if (folder.exists()) {
             return folder;
+        }
         getWorkspace().run(new IWorkspaceRunnable() {
             @Override
             public void run(IProgressMonitor monitor) throws CoreException {
@@ -131,8 +130,7 @@ public class CompilationUnitTestHelper {
                 }
                 folder.create(true, true, null);
             }
-        },
-                null);
+        }, null);
 
         return folder;
     }
@@ -145,29 +143,4 @@ public class CompilationUnitTestHelper {
         return getWorkspace().getRoot();
     }
 
-}
-
-class BasicProblemRequestor implements IProblemRequestor {
-    @Override
-    public void acceptProblem(IProblem problem) {
-    }
-
-    @Override
-    public void beginReporting() {
-    }
-
-    @Override
-    public void endReporting() {
-    }
-
-    @Override
-    public boolean isActive() {
-        return true;
-    }
-}
-
-class TestValidationMessage {
-    String message;
-    int lineNumber;
-    int severity;
 }
