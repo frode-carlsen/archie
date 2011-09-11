@@ -36,6 +36,9 @@ import org.junit.Test;
  * <li>On the Test tab, uncheck "Run in UI thread"</li>
  * <li>On the Main tab, choose application : "[No application] : Headless Mode"</li>
  * </ul>
+ * 
+ * 
+ * @TODO Move to separate plugin
  */
 public class DependencyRuleTest {
 
