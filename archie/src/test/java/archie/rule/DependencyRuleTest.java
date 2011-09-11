@@ -15,37 +15,95 @@
  */
 package archie.rule;
 
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.CompilationUnit;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Use cases:
+ * !!!! Must be launched using the <b>JUnit Plug-in Test</b> launcher, not the default Junit launcher, since we need
+ * access to a workspace in order to resolve classpaths when visting referenced classes.
  * 
- * - Class/Package depends on Class/Package - deny
- * - Class/Package/Methods depends on Class/Package/Method - deny
- * 
+ * <p>
+ * <b>TIPS</b><br>
+ * To avoid popping up an instance of Eclipse and make the test a little bit faster: 
+ * choose Run / Run Configuration from the menu:
+ * <ul>
+ * <li>On the Test tab, uncheck "Run in UI thread"</li>
+ * <li>On the Main tab, choose application :  "[No application] : Headless Mode"</li>
+ * </ul>
  */
 public class DependencyRuleTest {
 
-    @SuppressWarnings("unused")
+    private static MockArchieCompilationUnit compilationUnit;
+    private TestValidationMessage validator = new TestValidationMessage();
+
+    @BeforeClass
+    public static void setupCompilationUnit() throws Exception {
+        CompilationUnitTestHelper testHelper = new CompilationUnitTestHelper();
+
+        DependencyRuleTest.compilationUnit = testHelper.createCompilationUnit("hello.world.HelloWorld", ""
+                + "package hello.world;\n"
+                + "import java.util.*;\n"
+                + "import java.math.BigDecimal;\n\n"
+                + "public class HelloWorld{\n"
+                + "   private void hello(){\n"
+                + "      new StringBuilder().append(\"hello\");\n"
+                + "   }\n"
+                + "}");
+    }
+
+    @Before
+    public void setupValidator() {
+        compilationUnit.setTestValidationMessage(validator); // reinitialize
+    }
+
     @Test
-    public void shall_trigger_when_match_package() throws Exception {
-        String dummy = "import java.util.*;\n import java.math.BigDecimal;\n\npublic class HelloWorld{}";
-        CompilationUnit unit = createCompilationUnit(dummy);
+    public void shall_trigger_when_match_To_package() throws Exception {
 
-        // when(packageName().matches("java.util")).assertThat(doesNotDependOn())
+        DenyDependencyRule rule = new DenyDependencyRule(".*", ".*", ".*", "java.math.*", true);
+
+        rule.check(compilationUnit);
+
+        assertContains(validator.message, "Import dependency", "java.math.BigDecimal");
+        Assert.assertThat(validator.lineNumber, equalTo(3));
 
     }
 
-    private CompilationUnit createCompilationUnit(String dummy) {
-        ASTParser parser = ASTParser.newParser(AST.JLS3);
-        parser.setStatementsRecovery(true);
-        parser.setBindingsRecovery(true);
-        parser.setResolveBindings(true);
-        parser.setSource(dummy.toCharArray());
-        CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-        return cu;
+    @Test
+    public void shall_trigger_when_match_To_class() throws Exception {
+
+        DenyDependencyRule rule = new DenyDependencyRule(".*", ".*", ".*", "java.math.BigDecimal", true);
+
+        rule.check(compilationUnit);
+
+        assertContains(validator.message, "Import dependency", "java.math.BigDecimal");
+        Assert.assertThat(validator.lineNumber, equalTo(3));
+
     }
+
+    @Test
+    public void shall_trigger_when_match_To_methodcall() throws Exception {
+
+        DenyDependencyRule rule = new DenyDependencyRule(".*", ".*", ".*", "java.lang.StringBuilder#append.*", true);
+
+        rule.check(compilationUnit);
+
+        assertContains(validator.message, "Method dependency", "java.lang.StringBuilder");
+        Assert.assertThat(validator.lineNumber, equalTo(7));
+    }
+
+    private void assertContains(String message, String... expected) {
+        if (message == null) {
+            throw new AssertionError("Unexpected: " + message + "\nExpected: Not Null");
+        }
+        for (String exp : expected) {
+            if (!message.contains(exp)) {
+                throw new AssertionError("Unexpected: " + message + "\nExpected: " + exp);
+            }
+        }
+    }
+
 }

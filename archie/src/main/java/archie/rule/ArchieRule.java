@@ -19,6 +19,6 @@ import archie.builder.ArchieCompilationUnit;
 
 public interface ArchieRule {
 
-    void visit(ArchieCompilationUnit marker);
+    void check(ArchieCompilationUnit marker);
 
 }

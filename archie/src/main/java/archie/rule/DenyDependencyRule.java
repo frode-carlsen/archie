@@ -58,27 +58,13 @@ public class DenyDependencyRule implements ArchieRule {
             String methodCall = declaringClassPackage + declaringClassName + "#" + methodDeclarationName;
 
             if (denyTo.matcher(methodCall).matches()) {
-                String txt = createWarningText(this.acu.getFullyQualifiedClassName(), methodCall, this.acu.getSourceLocation(), denyToSrcLocation);
+                String txt = createWarningText(this.acu.getFullyQualifiedClassName(), methodCall, this.acu.getSourceLocation(),
+                        denyToSrcLocation);
                 this.acu.addMarker("Method dependency " + txt, this.acu.getCompilationUnit().getLineNumber(node.getStartPosition()),
                         IMarker.SEVERITY_WARNING);
             }
 
             return true;
-        }
-    }
-
-    private static String getSourceLocation(IBinding methodBinding, ITypeBinding declaringClass) {
-        IJavaElement javaElement = methodBinding.getJavaElement();
-        if (javaElement == null) {
-            return null;
-        }
-        IPath path = javaElement.getPath();
-        if ("jar".equals(path.getFileExtension())) {
-            return path.lastSegment();
-        } else if (declaringClass != null) {
-            return declaringClass.getJavaElement().getResource().getProjectRelativePath().toPortableString();
-        } else {
-            return javaElement.getPath().toPortableString();
         }
     }
 
@@ -109,13 +95,32 @@ public class DenyDependencyRule implements ArchieRule {
     }
 
     @Override
-    public void visit(final ArchieCompilationUnit acu) {
+    public void check(final ArchieCompilationUnit acu) {
         if (shouldCheckRule(acu)) {
             if (isMatchMethodPattern()) {
                 acu.accept(new CheckMethodInvocationsVisitor(acu));
             } else {
                 checkImportDeclarations(acu);
             }
+        }
+    }
+
+    String getSourceLocation(IBinding methodBinding, ITypeBinding declaringClass) {
+        if (methodBinding == null) {
+            throw new IllegalStateException("Cannot find methodbinding, running without workspace?");
+        }
+
+        IJavaElement javaElement = methodBinding.getJavaElement();
+        if (javaElement == null) {
+            return null;
+        }
+        IPath path = javaElement.getPath();
+        if ("jar".equals(path.getFileExtension())) {
+            return path.lastSegment();
+        } else if (declaringClass != null) {
+            return declaringClass.getJavaElement().getResource().getProjectRelativePath().toPortableString();
+        } else {
+            return javaElement.getPath().toPortableString();
         }
     }
 
@@ -129,10 +134,12 @@ public class DenyDependencyRule implements ArchieRule {
         @SuppressWarnings("unchecked")
         List<ImportDeclaration> imports = acu.getCompilationUnit().imports();
         for (ImportDeclaration i : imports) {
+
             String denyToSrcLocation = getSourceLocation(i.resolveBinding(), null);
             if (denyToSrc != null && denyToSrcLocation != null && !denyToSrc.matcher(denyToSrcLocation).find()) {
                 continue;
             }
+
             String importName = i.getName().getFullyQualifiedName();
 
             if (denyTo.matcher(importName).lookingAt()) {

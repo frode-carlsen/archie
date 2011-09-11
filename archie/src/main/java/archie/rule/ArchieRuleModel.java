@@ -56,7 +56,7 @@ public class ArchieRuleModel {
     @SuppressWarnings("unused")
     public void checkRules(CompilationUnit cu, ArchieCompilationUnit marker) {
         for (ArchieRule rule : getRules()) {
-            rule.visit(marker);
+            rule.check(marker);
         }
     }
 
