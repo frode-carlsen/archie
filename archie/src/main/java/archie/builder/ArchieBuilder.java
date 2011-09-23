@@ -92,7 +92,7 @@ public class ArchieBuilder extends IncrementalProjectBuilder {
     }
 
     public void checkResource(ArchieRuleModel ruleModel, IResource resource) {
-        if (!(resource instanceof IFile) || !resource.getFileExtension().equals("java")) {
+        if (!(resource instanceof IFile) || resource.getFileExtension() == null || !resource.getFileExtension().equals("java")) {
             return;
         }
         deleteMarkers((IFile) resource);
