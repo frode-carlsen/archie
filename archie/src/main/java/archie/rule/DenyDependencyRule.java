@@ -161,7 +161,7 @@ public class DenyDependencyRule implements ArchieRule {
     }
 
     private boolean matchPackageName(final ArchieCompilationUnit acu) {
-        return denyFrom.matcher(acu.getPackageName()).lookingAt();
+        return denyFrom.matcher(acu.getFullyQualifiedClassName()).matches();
     }
 
     private String createWarningText(String from, String to, final String denyFromSrcLocation, String denyToSrcLocation) {
